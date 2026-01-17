@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<title>Экскаваторын засварын тайлан</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Засварын тайлан">
+
+<style>
+body { font-family: Arial, sans-serif; font-size: 13px; }
+h3 { margin-top: 25px; }
+
+.row { display: flex; gap: 10px; margin-bottom: 8px; }
+.row label { width: 40%; font-weight: bold; }
+.row input, .row textarea { width: 60%; padding: 5px; }
+
+textarea { resize: none; min-height: 60px; }
+
+.preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+.img-box { position: relative; }
+.img-box img {
+    width: 150px;
+    height: 100px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+}
+.img-box button {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(220,53,69,.9);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+}
+
+.add { background:#28a745;color:#fff;border:none;padding:6px 12px;cursor:pointer;}
+.delete { background:#dc3545;color:#fff;border:none;padding:4px 8px;cursor:pointer;}
+.noPrint { margin-top:15px;padding:8px 15px; }
+
+@media print { .noPrint { display:none; } }
+</style>
+</head>
+
+<body>
+
+<h3>Засварын ажлын тайлан</h3>
+
+<form>
+
+<div class="row"><label>Огноо:</label><input type="date"></div>
+<div class="row"><label>Техникийн парк дугаар:</label><input type="text"></div>
+<div class="row"><label>Техникийн сериал дугаар:</label><input type="text"></div>
+<div class="row"><label>Техникийн мото/цаг:</label><input type="text"></div>
+
+<h3>Эвдрэл гэмтлийн тайлбар</h3>
+<textarea oninput="autoResize(this)"></textarea>
+
+<div id="damageImages"></div>
+<button type="button" class="add noPrint" onclick="addImageBlock('damageImages')">
+➕ Зураг нэмэх
+</button>
+
+<h3>Засварын ажлын гүйцэтгэл</h3>
+<textarea oninput="autoResize(this)"></textarea>
+
+<div id="repairImages"></div>
+<button type="button" class="add noPrint" onclick="addImageBlock('repairImages')">
+➕ Зураг нэмэх
+</button>
+
+<h3>Хэрэглэсэн сэлбэг материал</h3>
+
+<table id="partsTable" border="1" width="100%">
+<tr>
+<th>Сэлбэгийн нэр</th>
+<th>Эдийн дугаар</th>
+<th>Тоо</th>
+<th>Үйлдэл</th>
+</tr>
+<tr>
+<td><input type="text" id="p_name"></td>
+<td><input type="text" id="p_code"></td>
+<td><input type="number" id="p_qty"></td>
+<td><button type="button" class="add" onclick="addPart()">+</button></td>
+</tr>
+</table>
+
+<button type="button" class="noPrint" onclick="window.print()">PDF / Хэвлэх</button>
+
+</form>
+
+<script>
+let imgIndex = 0;
+
+function autoResize(el) {
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+}
+
+/* === ОЛОН УДААГИЙН ЗУРАГ === */
+function addImageBlock(containerId) {
+    imgIndex++;
+    const container = document.getElementById(containerId);
+
+    const block = document.createElement("div");
+    block.style.marginTop = "10px";
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = true;
+    input.accept = "image/*";
+
+    const preview = document.createElement("div");
+    preview.className = "preview";
+    preview.id = "preview_" + imgIndex;
+
+    input.onchange = () => previewImages(input, preview.id);
+
+    block.appendChild(input);
+    block.appendChild(preview);
+    container.appendChild(block);
+}
+
+/* === PREVIEW + УСТГАХ === */
+function previewImages(input, previewId) {
+    const preview = document.getElementById(previewId);
+    preview.innerHTML = "";
+
+    Array.from(input.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const box = document.createElement("div");
+            box.className = "img-box";
+
+            const img = document.createElement("img");
+            img.src = e.target.result;
+
+            const del = document.createElement("button");
+            del.innerHTML = "✖";
+            del.onclick = () => box.remove();
+
+            box.appendChild(img);
+            box.appendChild(del);
+            preview.appendChild(box);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+/* === СЭЛБЭГ НЭМЭХ === */
+function addPart() {
+    if (!p_name.value || !p_code.value || !p_qty.value) {
+        alert("Бүх талбарыг бөглөнө үү");
+        return;
+    }
+    const t = document.getElementById("partsTable");
+    const r = t.insertRow(-1);
+    r.insertCell(0).innerText = p_name.value;
+    r.insertCell(1).innerText = p_code.value;
+    r.insertCell(2).innerText = p_qty.value;
+    r.insertCell(3).innerHTML =
+        '<button class="delete" onclick="this.parentNode.parentNode.remove()">✖</button>';
+
+    p_name.value = p_code.value = p_qty.value = "";
+}
+</script>
+
+</body>
+</html>
